@@ -3,7 +3,7 @@ IRRI-Workflow
 
 Note that the Git repository does not include the software required for
 the jobs. For now, grab the software tarball from
-http://www.isi.edu/~rynge/soybean/software.tar.gz . Untar it in the 
+http://www.isi.edu/~rynge/irri/software.tar.gz . Untar it in the 
 top level directory.
 
 The workflow is controlled by a configuration file named

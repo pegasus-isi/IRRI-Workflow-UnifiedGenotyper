@@ -1,0 +1,20 @@
+#!/bin/bash
+
+for GENOME in `cat inputs-sample.txt`; do
+    echo $GENOME
+    FOUND=0
+    for READ in 1 2 3; do
+        if ils /iplant/home/shared/irri/read$READ/T11073/Fq/$GENOME >/dev/null 2>&1; then
+            for F in `ils /iplant/home/shared/irri/read$READ/T11073/Fq/$GENOME/ | grep -v -E "^\/"`; do
+                echo "irods:///iplant/home/shared/irri/read$READ/T11073/Fq/$GENOME/$F"
+            done
+            FOUND=1
+            break
+        fi
+    done
+    if [ $FOUND = 0 ]; then
+        echo "$GENOME not found!"
+        exit 1
+    fi
+done
+

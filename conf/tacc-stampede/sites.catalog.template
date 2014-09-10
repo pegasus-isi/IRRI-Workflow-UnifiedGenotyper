@@ -16,6 +16,9 @@
         <directory type="shared-scratch" path="/scratch/$tacc_storage_group/$tacc_username/workflow-runs">
             <file-server operation="all" url="gsiftp://gridftp.stampede.tacc.xsede.org:2811/scratch/$tacc_storage_group/$tacc_username/workflow-runs"/>
         </directory>
+        <directory type="local-storage" path="/scratch/$tacc_storage_group/$tacc_username/outputs">
+            <file-server operation="all" url="gsiftp://gridftp.stampede.tacc.xsede.org:2811/scratch/$tacc_storage_group/$tacc_username/outputs"/>
+        </directory>
         <profile namespace="pegasus" key="job.aggregator">mpiexec</profile>
         <profile namespace="env" key="PEGASUS_HOME">/home1/00384/rynge/software/pegasus/4.4.0cvs</profile>
         <profile namespace="env" key="PATH">/home1/00384/rynge/software/pegasus/4.4.0cvs/bin:/home1/00384/rynge/software/irods/3.2/bin:/scratch/projects/xsede/globus-5.0.4-r1/bin:/usr/bin:/bin</profile>
@@ -23,8 +26,8 @@
         <profile namespace="globus" key="project">$tacc_allocation</profile>
     </site>
     <site  handle="irods_iplant" arch="x86_64" os="LINUX">
-        <directory type="local-storage" path="/iplant/home/shared/digbio/Pegasus_GATK_Results/Output_DIR/$username">
-            <file-server operation="all" url="irods:///iplant/home/shared/digbio/Pegasus_GATK_Results/Output_DIR/$username" />
+        <directory type="local-storage" path="/iplant/home/shared/irri/workflow-outputs/$username">
+            <file-server operation="all" url="irods:///iplant/home/shared/irri/workflow-outputs/$username" />
         </directory>
         <profile namespace="pegasus" key="irodsEnvFile" >$home/irods.iplant.env</profile>
     </site>

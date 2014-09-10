@@ -170,6 +170,23 @@ def generate_site_catalog():
                         tacc_storage_group = conf.get("tacc", "storage_group"),
               ))
     outf.close()
+
+
+def generate_output_map():
+    """ Uses a templete file to produce the Pegasus output map """
+    
+    logger.info("Generating output map")
+    inf = open("conf/" + conf.get("local", "exec_env") + 
+               "/output.map.template", 'r')
+    template = string.Template(inf.read())
+    inf.close()
+
+    outf = open(conf.get("local", "work_dir") + "/output.map", "w")
+    outf.write(template.substitute(
+                        username = getpass.getuser(), 
+                        run_id = conf.get("local", "run_id"), 
+              ))
+    outf.close()
    
 
 def read_input_lists(ref_urls, fastq_urls):
@@ -298,8 +315,8 @@ def sort_sam(read_id, dax, software_tar, ref_files, wf_files):
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     j.uses(wf_files['sam'], link=Link.INPUT)
-    j.uses(wf_files['sorted_reads'], link=Link.OUTPUT, transfer=False)
-    j.uses(wf_files['sorted_index'], link=Link.OUTPUT, transfer=False)
+    j.uses(wf_files['sorted_reads'], link=Link.OUTPUT, transfer=True)
+    j.uses(wf_files['sorted_index'], link=Link.OUTPUT, transfer=True)
     
     j.addArguments("SortSam.jar",
                    "CREATE_INDEX=TRUE",
@@ -618,9 +635,9 @@ def unified_genotyper(dax, software_file, ref_files, wf_files, sample_name):
     # outputs
     fname = base_name + ".vcf"
     wf_files[fname] = File(fname)
-    j.uses(wf_files[fname], link=Link.OUTPUT, transfer=True)
+    j.uses(wf_files[fname], link=Link.OUTPUT, transfer=False)
     wf_files[fname + ".idx"] = File(fname + ".idx")
-    j.uses(wf_files[fname + ".idx"], link=Link.OUTPUT, transfer=True)
+    j.uses(wf_files[fname + ".idx"], link=Link.OUTPUT, transfer=False)
     
     j.addArguments("-T", "UnifiedGenotyper",
                    "-glm", "BOTH",
@@ -631,7 +648,10 @@ def unified_genotyper(dax, software_file, ref_files, wf_files, sample_name):
                    "-I", wf_files[base_name + ".bam"],
                    "-o", wf_files[fname])
     dax.addJob(j)
-    
+
+    gzip_output(dax, software_file, wf_files[fname])
+    gzip_output(dax, software_file, wf_files[fname + ".idx"])
+ 
 
 def combine_variants(dax, software_file, ref_files, wf_files):
 
@@ -682,6 +702,21 @@ def combine_variants(dax, software_file, ref_files, wf_files):
                             wf_files[conf.get("local", "run_id") + "-" + 'All.vcf'],
                             wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_indel.vcf'],
                             wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_indel.vcf.idx'])
+
+
+def gzip_output(dax, software_tar, in_file):
+    """ we want some outputs gzipped """
+    add_executable(dax, "gzip", "gzip-wrapper")
+    j = ComputeJob("gzip", cores = 1, mem_gb = 1, partition = "part2")
+    j.uses(software_tar, link=Link.INPUT)
+
+    out_file = File(in_file.name + ".gz")
+
+    j.uses(in_file, link=Link.INPUT)
+    j.uses(out_file, link=Link.OUTPUT, transfer=True)
+
+    j.addArguments(in_file, out_file)
+    dax.addJob(j)
 
 
 def generate_dax():
@@ -844,6 +879,7 @@ def main():
            "/software.tar.gz software")
 
     generate_site_catalog()
+    generate_output_map()
 
     # FIXME: what should we copy / keep in the top dir?
     myexec("cp conf/" + conf.get("local", "exec_env") + 
