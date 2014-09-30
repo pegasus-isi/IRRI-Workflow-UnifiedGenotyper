@@ -135,9 +135,7 @@ def proxy_check():
     stdoutdata, stderrdata = p.communicate()
     r = p.returncode
     if r != 0:
-        logger.error(stderrdata)
-        raise RuntimeError("Command '%s' failed with error code %s" \
-                           % (cmd_line, r))
+        raise RuntimeError("Command grid-proxy-info failed: " + stderrdata)
     timeleft = int(stdoutdata)
 
     # two weeks minimum lifetime
@@ -250,11 +248,20 @@ def extract_read_id(url):
 
 def extract_sample_id(url):
     """ sample name is the first part of the base name (for example:
+    IRIS_313-10020 from
+    IRIS_313-10020_111221_I596_FCD0HFCACXX_L6_RICwdsRSYHSD23-3-IPAAPEK-62_1.fq.gz
     HN0001_FCD1P1JACXX_L6_SZAIPI024836-36 from
     HN001_FCD1P1JACXX_L6_SZAIPI024836-36_1.fq)
     """
     name = extract_read_id(url)
-    name = re.sub("_.*", "", name)
+    name = re.sub(".*/", "", url)
+    if name.startswith("IRIS_"):
+        m = re.match("^(IRIS_[0-9]+-[0-9]+)_", name)
+        if not m:
+            raise RuntimeError("Unable to extract read id from %s" %(url))
+        name = m.group(1)
+    else:
+        name = re.sub("_.*", "", name)
     return name
 
 
@@ -570,7 +577,7 @@ def merge_and_genotype(dax, software_tar, ref_files, wf_files, read_ids):
 
     # group the reads per sample
     for r in read_ids:
-        sample = re.sub("_.*", "", r)
+        sample = extract_sample_id(r)
         if not sample in sample_reads:
             sample_reads[sample] = []
         sample_reads[sample].append(r)
@@ -770,15 +777,15 @@ def generate_dax():
         # put these in a list so jobs can pick them up
         ref_files.append(f)
 
-    for lane in range(len(fastq_urls) / 2):
+    for read in range(len(fastq_urls) / 2):
 
-        # input files for this lane   
-        wf_files['paired_read1_fastq'] = File(extract_lfn(fastq_urls[lane * 2]))
-        wf_files['paired_read1_fastq'].addPFN(PFN(fastq_urls[lane * 2], "irods_iplant"))
+        # input files for this read   
+        wf_files['paired_read1_fastq'] = File(extract_lfn(fastq_urls[read * 2]))
+        wf_files['paired_read1_fastq'].addPFN(PFN(fastq_urls[read * 2], "irods_iplant"))
         dax.addFile(wf_files['paired_read1_fastq'])
 
-        wf_files['paired_read2_fastq'] = File(extract_lfn(fastq_urls[lane * 2 + 1]))
-        wf_files['paired_read2_fastq'].addPFN(PFN(fastq_urls[lane * 2 + 1], "irods_iplant"))
+        wf_files['paired_read2_fastq'] = File(extract_lfn(fastq_urls[read * 2 + 1]))
+        wf_files['paired_read2_fastq'].addPFN(PFN(fastq_urls[read * 2 + 1], "irods_iplant"))
         dax.addFile(wf_files['paired_read2_fastq'])
 
         read_id = extract_read_id(wf_files['paired_read1_fastq'].name)
@@ -916,5 +923,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as r:
+        logger.error(r)
+
 

@@ -1,9 +1,8 @@
 #!/bin/bash
 
 for GENOME in `cat inputs-sample.txt`; do
-    echo $GENOME
     FOUND=0
-    for READ in 1 2 3; do
+    for READ in `seq 1 10`; do
         if ils /iplant/home/shared/irri/read$READ/T11073/Fq/$GENOME >/dev/null 2>&1; then
             for F in `ils /iplant/home/shared/irri/read$READ/T11073/Fq/$GENOME/ | grep -v -E "^\/"`; do
                 echo "irods:///iplant/home/shared/irri/read$READ/T11073/Fq/$GENOME/$F"
@@ -14,7 +13,8 @@ for GENOME in `cat inputs-sample.txt`; do
     done
     if [ $FOUND = 0 ]; then
         echo "$GENOME not found!"
-        exit 1
+    else
+        echo "$GENOME added."
     fi
 done
 
