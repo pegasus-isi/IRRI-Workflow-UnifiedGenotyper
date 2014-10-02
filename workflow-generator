@@ -642,9 +642,9 @@ def unified_genotyper(dax, software_file, ref_files, wf_files, sample_name):
     # outputs
     fname = base_name + ".vcf"
     wf_files[fname] = File(fname)
-    j.uses(wf_files[fname], link=Link.OUTPUT, transfer=False)
+    j.uses(wf_files[fname], link=Link.OUTPUT, transfer=True)
     wf_files[fname + ".idx"] = File(fname + ".idx")
-    j.uses(wf_files[fname + ".idx"], link=Link.OUTPUT, transfer=False)
+    j.uses(wf_files[fname + ".idx"], link=Link.OUTPUT, transfer=True)
     
     j.addArguments("-T", "UnifiedGenotyper",
                    "-glm", "BOTH",
@@ -655,9 +655,6 @@ def unified_genotyper(dax, software_file, ref_files, wf_files, sample_name):
                    "-I", wf_files[base_name + ".bam"],
                    "-o", wf_files[fname])
     dax.addJob(j)
-
-    gzip_output(dax, software_file, wf_files[fname])
-    gzip_output(dax, software_file, wf_files[fname + ".idx"])
  
 
 def combine_variants(dax, software_file, ref_files, wf_files):
