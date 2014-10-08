@@ -748,7 +748,7 @@ def generate_dax():
 
     # determine how many TACC compute nodes we need
     num_inputs_in_set = min(len(fastq_urls) / 2, 100)
-    conf.set("exec_environment", "hosts_part1", str( (num_inputs_in_set // 16 + 1) * 1 ))
+    conf.set("exec_environment", "hosts_part1", str( (num_inputs_in_set // 16 + 1) * 3 ))
     conf.set("exec_environment", "hosts_part2", str( (num_inputs_in_set // 16 + 1) * 1 ))
     conf.set("exec_environment", "hosts_part3", str( 1 ))
 
