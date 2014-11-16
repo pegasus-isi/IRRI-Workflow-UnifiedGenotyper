@@ -64,7 +64,7 @@ class ComputeJob(Job):
                                 value=str(mem_mb)))
         self.addProfile(Profile(Namespace.CONDOR,
                                 key="request_disk",
-                                value=str(20*1024*1024)))
+                                value=str(1*1024*1024)))
 
         # special sauce for TACC - we want smaller jobs to go to the normal
         # compute nodes and the large memory ones to go to the large memory
@@ -139,7 +139,7 @@ def proxy_check():
     timeleft = int(stdoutdata)
 
     # two weeks minimum lifetime
-    if timeleft < (60*60*24*10):
+    if timeleft < (60*60*24*7):
         raise RuntimeError("There is not enough time left on your grid" +
                            " proxy. Please renew, then run this command" +
                            " again")
@@ -325,7 +325,7 @@ def sort_sam(read_id, dax, software_tar, ref_files, wf_files):
     j.uses(wf_files['sorted_reads'], link=Link.OUTPUT, transfer=True)
     j.uses(wf_files['sorted_index'], link=Link.OUTPUT, transfer=True)
     
-    j.addArguments("SortSam.jar",
+    j.addArguments("SortSam",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
@@ -349,7 +349,7 @@ def fix_mate_information(read_id, dax, software_tar, ref_files, wf_files):
     j.uses(wf_files['fixed_mates_reads'], link=Link.OUTPUT, transfer=False)
     j.uses(wf_files['fixed_mates_index'], link=Link.OUTPUT, transfer=False)
     
-    j.addArguments("FixMateInformation.jar",
+    j.addArguments("FixMateInformation",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
@@ -373,7 +373,7 @@ def mark_duplicates(read_id, dax, software_tar, ref_files, wf_files):
     j.uses(wf_files['deduped_index'], link=Link.OUTPUT, transfer=False)
     #j.uses(wf_files['deduped_metrics'], link=Link.OUTPUT, transfer=False)
     
-    j.addArguments("MarkDuplicates.jar",
+    j.addArguments("MarkDuplicates",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
@@ -399,7 +399,7 @@ def add_replace(read_id, dax, software_tar, ref_files, wf_files):
 
     sample_id = extract_sample_id(read_id)
 
-    j.addArguments("AddOrReplaceReadGroups.jar",
+    j.addArguments("AddOrReplaceReadGroups",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
                    "I=" + wf_files['deduped_reads'].name,
@@ -420,7 +420,7 @@ def add_replace(read_id, dax, software_tar, ref_files, wf_files):
 
 def realign_target_creator(read_id, dax, software_tar, ref_files, wf_files):
     add_executable(dax, "realign_target_creator", "gatk-wrapper")
-    j = ComputeJob("realign_target_creator", cores = 15, mem_gb = 11,
+    j = ComputeJob("realign_target_creator", cores = 12, mem_gb = 11,
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     for f in ref_files:
@@ -430,7 +430,7 @@ def realign_target_creator(read_id, dax, software_tar, ref_files, wf_files):
     j.uses(wf_files['intervals'], link=Link.OUTPUT, transfer=False)
     
     j.addArguments("-T", "RealignerTargetCreator",
-                   "-nt", "15",
+                   "-nt", "12",
                    "-R", extract_fasta_basefile(ref_files),
                    "-I", wf_files['addrepl_reads'],
                    "-o", wf_files['intervals']) 
@@ -470,7 +470,7 @@ def select_and_filter_snp(dax, software_file, ref_files, wf_files,
     wf_files[intername] = File(intername) 
     
     add_executable(dax, "select_variants_snp", "gatk-wrapper")    
-    j = ComputeJob("select_variants_snp", cores = 14, mem_gb = 10,
+    j = ComputeJob("select_variants_snp", cores = 12, mem_gb = 10,
                    partition = "part3")
     
     # inputs
@@ -483,7 +483,7 @@ def select_and_filter_snp(dax, software_file, ref_files, wf_files,
     j.uses(wf_files[intername], link=Link.OUTPUT, transfer=False)
     
     j.addArguments("-T", "SelectVariants",
-                   "-nt", "15",
+                   "-nt", "12",
                    "-R", extract_fasta_basefile(ref_files),
                    "-selectType", "SNP",
                    "-V", in_file,
@@ -524,7 +524,7 @@ def select_and_filter_indel(dax, software_file, ref_files, wf_files,
 
         
     add_executable(dax, "select_variants_indel", "gatk-wrapper")    
-    j = ComputeJob("select_variants_indel", cores = 14, mem_gb = 10,
+    j = ComputeJob("select_variants_indel", cores = 12, mem_gb = 10,
                    partition = "part3")
     
     # inputs
@@ -537,7 +537,7 @@ def select_and_filter_indel(dax, software_file, ref_files, wf_files,
     j.uses(wf_files[intername], link=Link.OUTPUT, transfer=False)
     
     j.addArguments("-T", "SelectVariants",
-                   "-nt", "15",
+                   "-nt", "12",
                    "-R", extract_fasta_basefile(ref_files),
                    "-selectType", "INDEL",
                    "-V", in_file,
@@ -593,7 +593,7 @@ def merge_and_genotype(dax, software_tar, ref_files, wf_files, read_ids):
         fname = conf.get("local", "run_id") + "-" + sample
         out_bam = File(fname + ".bam")
         wf_files[fname + ".bam"] =  out_bam
-        out_index = File(fname + ".bai")
+        out_index = File(fname + ".bam.bai")
         wf_files[fname + ".bai"] =  out_index
         j.uses(out_bam, link=Link.OUTPUT, transfer=True)
         j.addArguments(out_bam)
@@ -614,7 +614,7 @@ def merge_and_genotype(dax, software_tar, ref_files, wf_files, read_ids):
         j = ComputeJob("merge_index", cores = 1, mem_gb = 10, partition = "part2")
         j.addArguments("index")
         j.addArguments(out_bam)
-        j.addArguments(out_index)
+        #j.addArguments(out_index)
         j.uses(software_tar, link=Link.INPUT)
         j.uses(out_bam, link=Link.INPUT)
         j.uses(out_index, link=Link.OUTPUT, transfer=True)
@@ -748,7 +748,7 @@ def generate_dax():
 
     # determine how many TACC compute nodes we need
     num_inputs_in_set = min(len(fastq_urls) / 2, 100)
-    conf.set("exec_environment", "hosts_part1", str( (num_inputs_in_set // 16 + 1) * 3 ))
+    conf.set("exec_environment", "hosts_part1", str( (num_inputs_in_set // 16 + 1) * 4 ))
     conf.set("exec_environment", "hosts_part2", str( (num_inputs_in_set // 16 + 1) * 1 ))
     conf.set("exec_environment", "hosts_part3", str( 1 ))
 
