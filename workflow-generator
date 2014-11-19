@@ -325,7 +325,7 @@ def sort_sam(read_id, dax, software_tar, ref_files, wf_files):
     j.uses(wf_files['sorted_reads'], link=Link.OUTPUT, transfer=True)
     j.uses(wf_files['sorted_index'], link=Link.OUTPUT, transfer=True)
     
-    j.addArguments("SortSam",
+    j.addArguments("SortSam.jar",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
@@ -349,7 +349,7 @@ def fix_mate_information(read_id, dax, software_tar, ref_files, wf_files):
     j.uses(wf_files['fixed_mates_reads'], link=Link.OUTPUT, transfer=False)
     j.uses(wf_files['fixed_mates_index'], link=Link.OUTPUT, transfer=False)
     
-    j.addArguments("FixMateInformation",
+    j.addArguments("FixMateInformation.jar",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
@@ -373,7 +373,7 @@ def mark_duplicates(read_id, dax, software_tar, ref_files, wf_files):
     j.uses(wf_files['deduped_index'], link=Link.OUTPUT, transfer=False)
     #j.uses(wf_files['deduped_metrics'], link=Link.OUTPUT, transfer=False)
     
-    j.addArguments("MarkDuplicates",
+    j.addArguments("MarkDuplicates.jar",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
@@ -399,7 +399,7 @@ def add_replace(read_id, dax, software_tar, ref_files, wf_files):
 
     sample_id = extract_sample_id(read_id)
 
-    j.addArguments("AddOrReplaceReadGroups",
+    j.addArguments("AddOrReplaceReadGroups.jar",
                    "MAX_RECORDS_IN_RAM=5000000",
                    "TMP_DIR=.",
                    "I=" + wf_files['deduped_reads'].name,
