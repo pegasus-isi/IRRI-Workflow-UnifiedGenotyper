@@ -4,15 +4,13 @@ if [ ! -d software ]; then
     tar xzf software.tar.gz
 fi
 
-export TMPDIR=`pwd`
+export TMPDIR=`pwd`/tmp
+mkdir -p $TMPDIR
 
 OUTFILE=`mktemp -t gatk-output.XXXXXXXXXX` || exit 1
 
 # memory depends on what subsystem we call
-OPTIONS="-Xmx7g -XX:+UseSerialGC"
-if (echo "'$@'" | grep -i "HaplotypeCaller") >/dev/null; then
-    OPTIONS="-Xmx2g -XX:+UseSerialGC"
-fi
+OPTIONS="-Xmx4g -XX:+UseSerialGC"
 OPTIONS="$OPTIONS -Djava.io.tmpdir=$TMPDIR"
 
 java $OPTIONS \

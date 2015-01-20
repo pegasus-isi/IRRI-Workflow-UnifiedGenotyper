@@ -289,7 +289,7 @@ def alignment_to_reference(read_id, dax, software_tar, ref_files, wf_files):
     # Oversubscriptions is ok, as bwa can not keep all the cores busy 100%
     # of the time.
     add_executable(dax, "alignment_to_reference", "bwa-wrapper")
-    j = ComputeJob("alignment_to_reference", cores = 7, mem_gb = 8,
+    j = ComputeJob("alignment_to_reference", cores = 7, mem_gb = 5,
                    partition = "part1")
     
     # determine which is the fasta file
@@ -318,7 +318,7 @@ def alignment_to_reference(read_id, dax, software_tar, ref_files, wf_files):
 def sort_sam(read_id, dax, software_tar, ref_files, wf_files):
 
     add_executable(dax, "sort_sam", "picard-wrapper")
-    j = ComputeJob("sort_sam", cores = 1, mem_gb = 23, 
+    j = ComputeJob("sort_sam", cores = 1, mem_gb = 12, 
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     j.uses(wf_files['sam'], link=Link.INPUT)
@@ -328,7 +328,7 @@ def sort_sam(read_id, dax, software_tar, ref_files, wf_files):
     j.addArguments("SortSam.jar",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
-                   "TMP_DIR=.",
+                   "TMP_DIR=tmp",
                    "I=" + wf_files['sam'].name,
                    "O=" + wf_files['sorted_reads'].name,
                    "SO=coordinate",
@@ -341,7 +341,7 @@ def sort_sam(read_id, dax, software_tar, ref_files, wf_files):
 def fix_mate_information(read_id, dax, software_tar, ref_files, wf_files):
 
     add_executable(dax, "fix_mate_information", "picard-wrapper")
-    j = ComputeJob("fix_mate_information", cores = 1, mem_gb = 23, 
+    j = ComputeJob("fix_mate_information", cores = 1, mem_gb = 12, 
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     j.uses(wf_files['sorted_reads'], link=Link.INPUT)
@@ -352,7 +352,7 @@ def fix_mate_information(read_id, dax, software_tar, ref_files, wf_files):
     j.addArguments("FixMateInformation.jar",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
-                   "TMP_DIR=.",
+                   "TMP_DIR=tmp",
                    "I=" + wf_files['sorted_reads'].name,
                    "O=" + wf_files['fixed_mates_reads'].name,
                    "SO=coordinate",
@@ -364,7 +364,7 @@ def fix_mate_information(read_id, dax, software_tar, ref_files, wf_files):
 
 def mark_duplicates(read_id, dax, software_tar, ref_files, wf_files):
     add_executable(dax, "mark_duplicates", "picard-wrapper")
-    j = ComputeJob("mark_duplicates", cores = 1, mem_gb = 23,
+    j = ComputeJob("mark_duplicates", cores = 1, mem_gb = 12,
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     j.uses(wf_files['fixed_mates_reads'], link=Link.INPUT)
@@ -376,7 +376,7 @@ def mark_duplicates(read_id, dax, software_tar, ref_files, wf_files):
     j.addArguments("MarkDuplicates.jar",
                    "CREATE_INDEX=TRUE",
                    "MAX_RECORDS_IN_RAM=5000000",
-                   "TMP_DIR=.",
+                   "TMP_DIR=tmp",
                    "I=" + wf_files['fixed_mates_reads'].name,
                    "O=" + wf_files['deduped_reads'].name,
                    "METRICS_FILE=" + wf_files['deduped_metrics'].name,
@@ -389,7 +389,7 @@ def mark_duplicates(read_id, dax, software_tar, ref_files, wf_files):
 
 def add_replace(read_id, dax, software_tar, ref_files, wf_files):
     add_executable(dax, "add_replace", "picard-wrapper")
-    j = ComputeJob("add_replace", cores = 1, mem_gb = 23,
+    j = ComputeJob("add_replace", cores = 1, mem_gb = 12,
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     j.uses(wf_files['deduped_reads'], link=Link.INPUT)
@@ -401,7 +401,7 @@ def add_replace(read_id, dax, software_tar, ref_files, wf_files):
 
     j.addArguments("AddOrReplaceReadGroups.jar",
                    "MAX_RECORDS_IN_RAM=5000000",
-                   "TMP_DIR=.",
+                   "TMP_DIR=tmp",
                    "I=" + wf_files['deduped_reads'].name,
                    "O=" + wf_files['addrepl_reads'].name,
                    "RGID=" + sample_id,
@@ -420,7 +420,7 @@ def add_replace(read_id, dax, software_tar, ref_files, wf_files):
 
 def realign_target_creator(read_id, dax, software_tar, ref_files, wf_files):
     add_executable(dax, "realign_target_creator", "gatk-wrapper")
-    j = ComputeJob("realign_target_creator", cores = 12, mem_gb = 11,
+    j = ComputeJob("realign_target_creator", cores = 11, mem_gb = 5,
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     for f in ref_files:
@@ -442,7 +442,7 @@ def realign_target_creator(read_id, dax, software_tar, ref_files, wf_files):
 def indel_realign(read_id, dax, software_tar, ref_files, wf_files):
     # IndelRealigner can only be run single threaded
     add_executable(dax, "indel_realign", "gatk-wrapper")   
-    j = ComputeJob("indel_realign", cores = 1, mem_gb = 11,
+    j = ComputeJob("indel_realign", cores = 1, mem_gb = 5,
                    partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
     for f in ref_files:
@@ -461,116 +461,6 @@ def indel_realign(read_id, dax, software_tar, ref_files, wf_files):
     dax.addJob(j)
     
 
-
-def select_and_filter_snp(dax, software_file, ref_files, wf_files,
-                          in_file, out_file, out_idx):
-    
-    # we need an intermediate file
-    intername = re.sub(".*/", "", in_file.name) + "_snp_only.vcf"
-    wf_files[intername] = File(intername) 
-    
-    add_executable(dax, "select_variants_snp", "gatk-wrapper")    
-    j = ComputeJob("select_variants_snp", cores = 12, mem_gb = 10,
-                   partition = "part3")
-    
-    # inputs
-    j.uses(software_file, link=Link.INPUT)
-    for f in ref_files:
-        j.uses(f, link=Link.INPUT)
-    j.uses(in_file, link=Link.INPUT)
-
-    # outputs
-    j.uses(wf_files[intername], link=Link.OUTPUT, transfer=False)
-    
-    j.addArguments("-T", "SelectVariants",
-                   "-nt", "12",
-                   "-R", extract_fasta_basefile(ref_files),
-                   "-selectType", "SNP",
-                   "-V", in_file,
-                   "-o", wf_files[intername])
-    
-    dax.addJob(j)
-    
-    add_executable(dax, "filtering_snp", "gatk-wrapper")    
-    j = ComputeJob("filtering_snp", cores = 1, mem_gb = 10,
-                   partition = "part3")
-    
-    # inputs
-    j.uses(software_file, link=Link.INPUT)
-    for f in ref_files:
-        j.uses(f, link=Link.INPUT)
-    j.uses(wf_files[intername], link=Link.INPUT)
-
-    # outputs
-    j.uses(out_file, link=Link.OUTPUT, transfer=True)
-    j.uses(out_idx, link=Link.OUTPUT, transfer=True)
-    
-    j.addArguments("-T", "VariantFiltration",
-                   "-R", extract_fasta_basefile(ref_files),
-                   "-V", wf_files[intername],
-                   "--filterExpression", "'QD < 2.0 || FS > 60.0 || MQ < 40.0  || Haplotypescore > 20.0'",
-                   "--filterName", "my_snp_filter",
-                   "-o", out_file)
-
-    dax.addJob(j)
-
-
-def select_and_filter_indel(dax, software_file, ref_files, wf_files,
-                            in_file, out_file, out_idx):
-
-    # we need an intermediate file
-    intername = re.sub(".*/", "", in_file.name) + "_indel_only.vcf"
-    wf_files[intername] = File(intername) 
-
-        
-    add_executable(dax, "select_variants_indel", "gatk-wrapper")    
-    j = ComputeJob("select_variants_indel", cores = 12, mem_gb = 10,
-                   partition = "part3")
-    
-    # inputs
-    j.uses(software_file, link=Link.INPUT)
-    for f in ref_files:
-        j.uses(f, link=Link.INPUT)
-    j.uses(in_file, link=Link.INPUT)
-
-    # outputs
-    j.uses(wf_files[intername], link=Link.OUTPUT, transfer=False)
-    
-    j.addArguments("-T", "SelectVariants",
-                   "-nt", "12",
-                   "-R", extract_fasta_basefile(ref_files),
-                   "-selectType", "INDEL",
-                   "-V", in_file,
-                   "-o", wf_files[intername])
- 
-    dax.addJob(j)
- 
-    add_executable(dax, "filtering_indel", "gatk-wrapper")    
-    j = ComputeJob("filtering_indel", cores = 1, mem_gb = 10,
-                   partition = "part3")
-    
-    # inputs
-    j.uses(software_file, link=Link.INPUT)
-    for f in ref_files:
-        j.uses(f, link=Link.INPUT)
-    j.uses(wf_files[intername], link=Link.INPUT)
-
-    # outputs
-    j.uses(out_file, link=Link.OUTPUT, transfer=True)
-    j.uses(out_idx, link=Link.OUTPUT, transfer=True)
-    
-    j.addArguments("-T", "VariantFiltration",
-                   "-R", extract_fasta_basefile(ref_files),
-                   "-V", wf_files[intername],
-                   "--filterExpression", "'QD < 2.0 || FS > 200.0 || MQ < 40 || Haplotypescore > 20.0'",
-                   "--filterName", "my_indel_filter",
-                   "-o", out_file)
- 
-    dax.addJob(j)
-
-
-
-
 def merge_and_genotype(dax, software_tar, ref_files, wf_files, read_ids):
 
     sample_reads = {}
@@ -585,7 +475,7 @@ def merge_and_genotype(dax, software_tar, ref_files, wf_files, read_ids):
     for sample, reads in sample_reads.items():
         
         add_executable(dax, "merge", "samtools-wrapper")
-        j = ComputeJob("merge", cores = 1, mem_gb = 10, partition = "part2")
+        j = ComputeJob("merge", cores = 1, mem_gb = 5, partition = "part2")
         j.addArguments("merge")
         
         # outputs - only the bam files gets generated here, the index
@@ -611,7 +501,7 @@ def merge_and_genotype(dax, software_tar, ref_files, wf_files, read_ids):
         
         # we also need to index the merged bam
         add_executable(dax, "merge_index", "samtools-wrapper")
-        j = ComputeJob("merge_index", cores = 1, mem_gb = 10, partition = "part2")
+        j = ComputeJob("merge_index", cores = 1, mem_gb = 5, partition = "part2")
         j.addArguments("index")
         j.addArguments(out_bam)
         #j.addArguments(out_index)
@@ -627,7 +517,7 @@ def merge_and_genotype(dax, software_tar, ref_files, wf_files, read_ids):
 def unified_genotyper(dax, software_file, ref_files, wf_files, sample_name):
 
     add_executable(dax, "unified_genotyper", "gatk-wrapper")
-    j = ComputeJob("unified_genotyper", cores = 1, mem_gb = 10,
+    j = ComputeJob("unified_genotyper", cores = 1, mem_gb = 5,
                    partition = "part2")
     
     base_name = conf.get("local", "run_id") + "-" + sample_name
@@ -657,61 +547,10 @@ def unified_genotyper(dax, software_file, ref_files, wf_files, sample_name):
     dax.addJob(j)
  
 
-def combine_variants(dax, software_file, ref_files, wf_files):
-
-    add_executable(dax, "combine_variants", "gatk-wrapper")
-    j = ComputeJob("combine_variants", cores = 1, mem_gb = 10,
-                   partition = "part3")
-    
-    # inputs
-    j.uses(software_file, link=Link.INPUT)
-    for f in ref_files:
-        j.uses(f, link=Link.INPUT)
-    for i in range(1, 13):
-        fname = conf.get("local", "run_id") + "-" + "GVCF_Chr%d.vcf" % (i)
-        j.uses(wf_files[fname], link=Link.INPUT)
-        j.uses(wf_files[fname + ".idx"], link=Link.INPUT)
-
-    # outputs
-    fname = conf.get("local", "run_id") + "-" + "All.vcf"
-    wf_files[fname] = File(fname)
-    j.uses(wf_files[fname], link=Link.OUTPUT, transfer=True)
-    wf_files[fname + ".idx"] = File(fname + ".idx")
-    j.uses(wf_files[fname + ".idx"], link=Link.OUTPUT, transfer=True)
-    
-    j.addArguments("-T", "CombineVariants",
-                   "-R", extract_fasta_basefile(ref_files),
-                   "-o", wf_files[fname])
-    for i in range(1, 13):
-        fname = conf.get("local", "run_id") + "-" + "GVCF_Chr%d.vcf" % (i)
-        j.addArguments("--variant", wf_files[fname])
-    
-    dax.addJob(j)
-
-    # filter the results    
-    wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_snp.vcf'] = \
-            File(conf.get("local", "run_id") + "-" + "All_filtered_snp.vcf")
-    wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_snp.vcf.idx'] = \
-            File(conf.get("local", "run_id") + "-" + "All_filtered_snp.vcf.idx")
-    select_and_filter_snp(dax, software_file, ref_files, wf_files,
-                          wf_files[conf.get("local", "run_id") + "-" + 'All.vcf'],
-                          wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_snp.vcf'],
-                          wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_snp.vcf.idx'])
-    
-    wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_indel.vcf'] = \
-            File(conf.get("local", "run_id") + "-" + "All_filtered_indel.vcf")
-    wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_indel.vcf.idx'] = \
-            File(conf.get("local", "run_id") + "-" + "All_filtered_indel.vcf.idx")
-    select_and_filter_indel(dax, software_file, ref_files, wf_files,
-                            wf_files[conf.get("local", "run_id") + "-" + 'All.vcf'],
-                            wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_indel.vcf'],
-                            wf_files[conf.get("local", "run_id") + "-" + 'All_filtered_indel.vcf.idx'])
-
-
 def gzip_output(dax, software_tar, in_file):
     """ we want some outputs gzipped """
     add_executable(dax, "gzip", "gzip-wrapper")
-    j = ComputeJob("gzip", cores = 1, mem_gb = 1, partition = "part2")
+    j = ComputeJob("gzip", cores = 1, mem_gb = 1, partition = "part1")
     j.uses(software_tar, link=Link.INPUT)
 
     out_file = File(in_file.name + ".gz")
@@ -747,11 +586,10 @@ def generate_dax():
     read_input_lists(ref_urls, fastq_urls)
 
     # determine how many TACC compute nodes we need
-    num_inputs_in_set = min(len(fastq_urls) / 2, 100)
-    conf.set("exec_environment", "hosts_part1", str( (num_inputs_in_set // 16 + 1) * 4 ))
-    conf.set("exec_environment", "hosts_part2", str( (num_inputs_in_set // 16 + 1) * 1 ))
-    conf.set("exec_environment", "hosts_part3", str( 1 ))
-
+    hosts = max( int(len(fastq_urls) / 40), 1 )
+    conf.set("exec_environment", "hosts_part1", str(hosts))
+    conf.set("exec_environment", "hosts_part2", str(hosts))
+    
     # we need to bring a copy of the software with us
     software_tar = File("software.tar.gz")
     software_tar.addPFN(PFN(local_pfn(conf.get("local", "work_dir") + "/software.tar.gz"), "local"))
