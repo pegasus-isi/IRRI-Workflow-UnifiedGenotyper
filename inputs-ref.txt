@@ -1,9 +1,9 @@
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.dict
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.fasta
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.fasta.amb
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.fasta.ann
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.fasta.bwt
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.fasta.fai
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.fasta.pac
-irods:///iplant/home/shared/irri/references/ir64/ir64.cshl.draft.1.0.scaffold.fasta.sa
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.dict
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.fasta
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.fasta.amb
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.fasta.ann
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.fasta.bwt
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.fasta.fai
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.fasta.pac
+irods:///iplant/home/shared/irri/references/ir64_subset/ir64_subset.fasta.sa
 
