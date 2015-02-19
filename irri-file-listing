@@ -1,0 +1,29 @@
+#!/bin/bash
+
+function irri_ls
+{
+    echo "Checking $1 ..." 1>&2
+
+    IFS=$'\n'
+    for entry in `ils $1 | grep "^  "`; do
+
+        if (echo "$entry" | grep "^  C") >/dev/null 2>&1; then
+            # collection
+            coll=`echo "$entry" | sed 's/^  C. //'`
+            irri_ls $coll
+        else
+            file=`echo "$entry" | sed 's/^  //'`
+            if (echo $file | grep fq.gz) >/dev/null 2>&1; then
+                echo "irods://$1/$file"
+            fi
+        fi
+    done
+}
+
+if [ "x$1" = "x" ]; then
+    echo "Specify a top level iRods directory to start the listing from."
+    echo "For example:"
+    echo "./irri-file-listing /iplant/home/shared/irri/read5 >inputs-fastq.txt"
+    exit 1
+fi
+irri_ls $1
