@@ -715,10 +715,9 @@ def main():
         os.exit(1)
     os.makedirs(conf.get("local", "work_dir"))
 
-    # tar up the software
-    logger.info("Tarring up software directory to send with jobs")
-    myexec("tar czf " + conf.get("local", "work_dir") + \
-           "/software.tar.gz software")
+    # software tar ball
+    myexec("cp software.tar.gz " +
+           conf.get("local", "work_dir") + "/software.tar.gz")
 
     generate_site_catalog()
     generate_output_map()
